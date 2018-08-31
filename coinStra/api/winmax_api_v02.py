@@ -1,4 +1,3 @@
-#-*- coding: UTF-8 -*-
 import json
 import requests
 from urllib import request ,parse
@@ -24,18 +23,21 @@ class winmax_api:
 #        sign.update(textmod.encode(encoding='utf-8'))
 #        return sign.hexdigest().upper()
   
-    def get_winmax_depth(self, market):    
+    def get_depth(self, market):    
         resource = "%s/trade/trade/trade/trade?symbol=%s&brokerId=10003"%(self.url,market)
         context = ssl._create_unverified_context()
         req = request.Request(url=resource)
         res = request.urlopen(req,context=context)
         res = res.read().decode('utf-8')
         res_dict = json.loads(res)
-        return res_dict
+        res = {}
+        res['bids'] = res_dict['buy']
+        res['asks'] = res_dict['sell']
+        return res
 
-    def get_winmax_kline(self,market,n,typ,days = 1):
+    def get_kline(self,market,n,typ):
         ed = int(time.time())
-        be = ed - 24*60*60 *days
+        be = ed - 24*60*60
         resource = "%s/dataload/kline-query/pages?startTime=%s&endTime=%s&pageSize=%s&symbol=%s&kline=%s"%(self.url,be,ed,n,market,typ)
         context = ssl._create_unverified_context()
         req = request.Request(url=resource)
@@ -95,10 +97,8 @@ class winmax_api:
                 return res
             else:
                 print('winmax_account_info connect failed when time is ',ts)
-                return None
         except:
             print('winmax_account_info connect failed when time is ',ts)
-            return None
     
     def limit_order(self, market, price, num, side):
         
@@ -134,11 +134,9 @@ class winmax_api:
 #        res = res.read().decode('utf-8')
 #        res_dict = json.loads(res)
         res_dict = json.loads(req.text)
-        if res_dict['code'] == '100200':
-            return ID
-        else:
-            return None
-   
+#        print(ID)
+        return ID
+
     def order_cancel(self, order_id):
         ts = int(time.time())
         
@@ -168,39 +166,6 @@ class winmax_api:
 #        res_dict = json.loads(res)
         res_dict = json.loads(req.text)
         return res_dict
-    
-    def check_order(self, order_id):
-        ts = int(time.time())
-        
-        data = {'outTradeNo':order_id}
-        parms = {'businessNo':self.businessNo,
-                 'nonceStr':'1'*32,
-                 'timestamp':ts,
-                 'data':data,
-                 'sign':''}
-        
-        signal = {'apiSecret':self.apiSecret,
-                 'nonceStr':'1'*32,
-                 'timestamp':ts}
-        signal_url = parse.urlencode(self._dict_sort_key(dict(signal,**data)))
-        sign = hashlib.md5()
-        sign.update(signal_url.encode(encoding='utf-8'))
-        parms['sign'] = sign.hexdigest().upper()
-    
-        resource = "%s/exchangeApi/api/orderquery"%self.url
-        
-#        textmod = parse.urlencode(parms).encode(encoding='utf-8')
-
-#        context = ssl._create_unverified_context()
-        req = requests.post(url=resource,data=json.dumps(parms))
-#        res = request.urlopen(req,context=context)
-#        res = res.read().decode('utf-8')
-#        res_dict = json.loads(res)
-        res_dict = json.loads(req.text)
-        if res_dict['code'] == '100200':
-            return res_dict['data']
-        else:
-            return None
     
     def check_remian_order(self, market):
         ts = int(time.time())
@@ -245,25 +210,48 @@ class winmax_api:
                 print('check_remian_order connect failed when time is ',ts)
         except:
             print('check_remian_order connect failed when time is ',ts)
-'''     
-    def get_trade_hist(self, market):
-        apikey = self.apikey
-        secretkey = self.secrete_key 
+   
+    def is_cancel(self, order_id):
+        ts = int(time.time())
+        data = {'outTradeNo':str(order_id)}
+        parms = {'businessNo':self.businessNo,
+                 'nonceStr':'1'*32,
+                 'timestamp':ts,
+                 'data':data,
+                 'sign':''}
         
-        resource = "%s/api/user/getMyTradeLog"%self.url
-        parms = {'market':market,
-                'apikey':apikey}
+        signal = {'apiSecret':self.apiSecret,
+                 'nonceStr':'1'*32,
+                 'timestamp':ts}
+        signal_url = parse.urlencode(self._dict_sort_key(dict(signal,**data)))
+        sign = hashlib.md5()
+        sign.update(signal_url.encode(encoding='utf-8'))
+        parms['sign'] = sign.hexdigest().upper()
+    
+        resource = "%s/exchangeApi/api/orderqueryByH"%self.url
         
-        textmod = parse.urlencode(parms).encode(encoding='utf-8')
+#        textmod = parse.urlencode(parms).encode(encoding='utf-8')
 
-        context = ssl._create_unverified_context()
-        req = request.Request(url=resource,data=textmod)
-        res = request.urlopen(req,context=context)
-        res = res.read().decode('utf-8')
-        res_dict = json.loads(res)
-        
-        return res_dict
-
+#        context = ssl._create_unverified_context()
+        req = requests.post(url=resource,data=json.dumps(parms))
+#        res = request.urlopen(req,context=context)
+#        res = res.read().decode('utf-8')
+#        res_dict = json.loads(res)
+        res_dict = json.loads(req.text)
+        try:
+            if res_dict['code'] == '100200':
+                if res_dict['data']['tradeCoinStatus'] in ['UNQUEUE','WAITING']:
+                    return True
+                else:
+                    print(res_dict)
+                    return False
+            else:
+                print('is_cancel connect failed when time is ',ts)
+                return False
+        except:
+            print('is_cancel connect failed when time is ',ts)
+            return False
+'''
 
     def get_trade_ticker(self, market):
         
@@ -282,13 +270,12 @@ class winmax_api:
 '''
         
 if __name__=='__main__':
-    wkt_t = winmax_api('1234567890','1234567890')
-#    ss = wkt_t.account_info()
-#    ss = wkt_t.get_winmax_depth('UDC_ETH')
+    wkt_t = winmax_api('ysjj1132','ysjj11321qaz')
+    wkt_t.account_info()
+    wkt_t.get_depth('UDC_LTC')
 #    wkt_t.limit_order('UDC_ETH', 502, 1, 'BUY')
 #    ss = wkt_t.order_cancel('a23')
 #    
-    ss = wkt_t.get_winmax_kline('UDC_ETH',1,'15m')
 #    print(ss)
         
 
