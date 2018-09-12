@@ -214,15 +214,19 @@ class huobi_api:
         url = "/v1/account/accounts/{0}/balance".format(acct_id)
         params = {"account-id": acct_id}
         res_dict = self.api_key_get(params, url)
-        res ={}
-        for i in res_dict['data']['list']:
-            res[i['currency']] = {}
-        for i in res_dict['data']['list']:
-            if i['type'] == 'trade':
-                res[i['currency']]['available'] =i['balance']
-            else:
-                res[i['currency']]['lock'] =i['balance']
-        return res
+        try:
+            res ={}
+            for i in res_dict['data']['list']:
+                res[i['currency']] = {}
+            for i in res_dict['data']['list']:
+                if i['type'] == 'trade':
+                    res[i['currency']]['available'] =i['balance']
+                else:
+                    res[i['currency']]['lock'] =i['balance']
+            return res
+        except Exception as ex:
+            print('huobi account exception,',ex)
+            return None
 
 
     # 下单

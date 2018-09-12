@@ -1,5 +1,5 @@
 import wx
-import winmax_api_v02 as wmapi
+import api.winmax_api_v02 as wmapi
 import time
 from CoinStrategy import *
 

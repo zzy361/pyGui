@@ -271,8 +271,7 @@ class winmax_api:
         
 if __name__=='__main__':
     wkt_t = winmax_api('ysjj1132','ysjj11321qaz')
-    wkt_t.account_info()
-    wkt_t.get_depth('UDC_LTC')
+    print(wkt_t.get_kline('UDC_ETH',300,'15m'))
 #    wkt_t.limit_order('UDC_ETH', 502, 1, 'BUY')
 #    ss = wkt_t.order_cancel('a23')
 #    

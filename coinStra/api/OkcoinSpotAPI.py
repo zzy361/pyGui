@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #用于访问OKCOIN 现货REST API
-from HttpMD5Util import buildMySign,httpGet,httpPost
+from api.HttpMD5Util import buildMySign,httpGet,httpPost
 
 class OKCoinSpot:
 
@@ -41,11 +41,15 @@ class OKCoinSpot:
         params['api_key'] = self.__apikey
         params['sign'] = buildMySign(params,self.__secretkey)
         ok_res = httpPost(self.__url,USERINFO_RESOURCE,params)
-        res = {}
-        for i in ok_res['info']['funds']['free'].keys():
-            dic = {'available':float(ok_res['info']['funds']['free'][i]),'lock':float(ok_res['info']['funds']['freezed'][i])}
-            res[i] = dic
-        return res
+        try:
+            res = {}
+            for i in ok_res['info']['funds']['free'].keys():
+                dic = {'available':float(ok_res['info']['funds']['free'][i]),'lock':float(ok_res['info']['funds']['freezed'][i])}
+                res[i] = dic
+            return res
+        except Exception as ex:
+            print('okex account exception,',ex)
+            return None
 
     #现货交易
     def limit_order(self,symbol,price,amount,tradeTyp):

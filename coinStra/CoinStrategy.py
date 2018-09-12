@@ -38,7 +38,7 @@ class CoinStrategy():
     
     def lookingforout(self):
         while self.status == 'in':
-            res = self.wmex.get_winmax_depth(self.exCoin)
+            res = self.wmex.get_depth(self.exCoin)
             bid1 = res['buy'][0][0]
             ask1 = res['sell'][0][0]
             if bid1/self.buyprice < 1 - self.stoploss:
@@ -100,9 +100,9 @@ class CoinStrategy():
         self.closeprice = allprice / vol
             
     def fillPriceList(self):
-        K5 = self.wmex.get_winmax_kline(self.exCoin,300,'5m',10)
+        K5 = self.wmex.get_kline(self.exCoin,300,'5m')
         K5close = pd.DataFrame(K5['data']['pages']['list'])
-        K15 = self.wmex.get_winmax_kline(self.exCoin,300,'15m',10)
+        K15 = self.wmex.get_kline(self.exCoin,300,'15m')
         K15close = pd.DataFrame(K15['data']['pages']['list'])
         close = np.nan
         value = []
@@ -125,7 +125,7 @@ class CoinStrategy():
         
     def updatePriceList(self):
         while self.ison:
-            K5 = self.wmex.get_winmax_kline(self.exCoin,1,'5m',1)
+            K5 = self.wmex.get_kline(self.exCoin,1,'5m')
             timedate = K5['data']['pages']['list'][0]['time']
             if timedate > self.pricelist['time'].iloc[-1]:
                 close = K5['data']['pages']['list'][0]['close']
